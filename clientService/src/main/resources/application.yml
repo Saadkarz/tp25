@@ -1,0 +1,36 @@
+server:
+  port: 8088  # Port pour le service client
+
+spring:
+  application:
+    name: service-client  # Nom du service tel qu'il apparaîtra dans Consul
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/Micro_ClientDB?createDatabaseIfNotExist=true
+    username: root
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update  # Crée ou met à jour automatiquement le schéma de la base
+    show-sql: true    # Affiche les requêtes SQL générées
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        enabled: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

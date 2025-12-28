@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Service MySQL - Base de données
+  # ============================================
+  mysql:
+    image: mysql:latest
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Service Consul - Découverte de services
+  # ============================================
+  consul:
+    image: consul:1.15.4
+    container_name: consul-container
+    ports:
+      - "8500:8500"
+    networks:
+      - microservices-network
+    command: agent -dev -ui -client=0.0.0.0
+
+  # ============================================
+  # Service Gateway - API Gateway
+  # ============================================
+  gateway-service:
+    build:
+      context: ./gatewayService
+    container_name: gateway-container
+    ports:
+      - "8888:8888"
+    depends_on:
+      consul:
+        condition: service_started
+    networks:
+      - microservices-network
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: 'true'
+
+  # ============================================
+  # Service Client - Microservice Client
+  # ============================================
+  client-service:
+    build:
+      context: ./clientService
+    container_name: client-container
+    ports:
+      - "8088:8088"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_started
+      gateway-service:
+        condition: service_started
+    networks:
+      - microservices-network
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: 'true'
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/Micro_ClientDB?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+  # ============================================
+  # Service Voiture - Microservice Voiture
+  # ============================================
+  voiture-service:
+    build:
+      context: ./voitureService
+    container_name: voiture-container
+    ports:
+      - "8089:8089"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_started
+      gateway-service:
+        condition: service_started
+    networks:
+      - microservices-network
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_CLOUD_CONSUL_DISCOVERY_ENABLED: 'true'
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/Micro_VoitureDB?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+  # ============================================
+  # Service phpMyAdmin - Administration MySQL
+  # ============================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-container
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+# ============================================
+# Réseau partagé pour tous les services
+# ============================================
+networks:
+  microservices-network:
+    driver: bridge
+
+# ============================================
+# Volume persistant pour MySQL
+# ============================================
+volumes:
+  mysql_data:

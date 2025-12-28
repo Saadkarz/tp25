@@ -1,0 +1,34 @@
+server:
+  port: 8888  # Port du Gateway
+
+spring:
+  application:
+    name: gateway-service  # Nom du service
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        enabled: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${server.port}
+    gateway:
+      discovery:
+        locator:
+          enabled: true  # Routage automatique via services Consul
+          lower-case-service-id: true  # Noms en minuscules
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty.http.client: INFO
