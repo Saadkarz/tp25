@@ -101,7 +101,7 @@ docker compose down
 
 L'interface Consul affiche tous les microservices enregistrés automatiquement :
 
-![Consul Services](Screenshots/Screenshot%202025-12-28%20134437.png)
+![Consul Services](Screenshots/Screenshot%202025-12-28%20134526.png)
 
 **Services enregistrés :**
 - ✅ `consul` - Service de découverte
@@ -115,7 +115,7 @@ L'interface Consul affiche tous les microservices enregistrés automatiquement :
 
 L'interface phpMyAdmin montre les bases de données créées automatiquement :
 
-![phpMyAdmin Databases](Screenshots/Screenshot%202025-12-28%20134526.png)
+![phpMyAdmin Databases](Screenshots/Screenshot%202025-12-28%20134437.png)
 
 **Bases de données créées :**
 - 📦 `Micro_ClientDB` - Base du service Client
